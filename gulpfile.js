@@ -8,14 +8,12 @@ var cp = require('child_process');
 var imagemin = require('gulp-imagemin');
 var browserSync = require('browser-sync');
 
-var jekyllCommand = (/^win/.test(process.platform)) ? 'jekyll.bat' : 'jekyll';
-
 /*
  * Build the Jekyll Site
  * runs a child process in node that runs the jekyll commands
  */
 gulp.task('jekyll-build', function (done) {
-	return cp.spawn(jekyllCommand, ['build'], {stdio: 'inherit'})
+	return cp.spawn('bundle', ['exec', 'jekyll', 'build'], {stdio: 'inherit', shell: true})
 		.on('close', done);
 });
 
@@ -85,7 +83,7 @@ gulp.task('watch', function() {
   gulp.watch('src/js/**/*.js', gulp.series(['js', 'jekyll-rebuild']));
   gulp.watch('src/fonts/**/*.{tff,woff,woff2}', gulp.series(['fonts']));
   gulp.watch('src/img/**/*.{jpg,png,gif}', gulp.series(['imagemin']));
-  gulp.watch(['*html', '_includes/*html', '_layouts/*.html'], gulp.series(['jekyll-rebuild']));
+  gulp.watch(['*html', '_includes/*html', '_layouts/*.html', '_config.yml'], gulp.series(['jekyll-rebuild']));
 });
 
 gulp.task('default', gulp.series(['js', 'sass', 'fonts', 'browser-sync', 'watch']));
