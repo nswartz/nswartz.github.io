@@ -1,89 +1,90 @@
-var gulp = require('gulp');
-var csso = require('gulp-csso');
-var uglify = require('gulp-uglify');
-var concat = require('gulp-concat');
-var sass = require('gulp-sass')(require('sass'));
-var plumber = require('gulp-plumber');
-var cp = require('child_process');
-var imagemin = require('gulp-imagemin');
-var browserSync = require('browser-sync');
+const { src, dest, watch, series, parallel } = require('gulp');
+const sass = require('sass');
+const gulpSass = require('gulp-sass')(sass);
+const csso = require('gulp-csso');
+const uglify = require('gulp-uglify');
+const concat = require('gulp-concat');
+const plumber = require('gulp-plumber');
+const imagemin = require('gulp-imagemin');
+const browserSync = require('browser-sync').create();
+const spawn = require('cross-spawn');
 
-/*
- * Build the Jekyll Site
- * runs a child process in node that runs the jekyll commands
- */
-gulp.task('jekyll-build', function (done) {
-	return cp.spawn('bundle', ['exec', 'jekyll', 'build'], {stdio: 'inherit', shell: true})
-		.on('close', done);
-});
+// Paths
+const paths = {
+  styles: 'src/styles/**/*.scss',
+  js: 'src/js/**/*.js',
+  fonts: 'src/fonts/**/*.{ttf,woff,woff2}',
+  images: 'src/img/**/*.{jpg,png,gif}',
+  html: ['*.html', '_layouts/*.html', '_includes/*.html', '_posts/**/*.md', '_config.yml']
+};
 
-/*
- * Rebuild Jekyll & reload browserSync
- */
-gulp.task('jekyll-rebuild', gulp.series(['jekyll-build'], function (done) {
-	browserSync.reload();
-	done();
-}));
+// --- Jekyll build task ---
+function jekyllBuild(done) {
+  const jekyll = spawn('bundle', ['exec', 'jekyll', 'build'], { stdio: 'inherit', shell: true });
+  jekyll.on('close', done);
+}
 
-/*
- * Build the jekyll site and launch browser-sync
- */
-gulp.task('browser-sync', gulp.series(['jekyll-build'], function(done) {
-	browserSync({
-		server: {
-			baseDir: '_site'
-		}
-	});
-	done()
-}));
+// --- Reload BrowserSync ---
+function reload(done) {
+  browserSync.reload();
+  done();
+}
 
-/*
-* Compile and minify sass
-*/
-gulp.task('sass', function() {
-  return gulp.src('src/styles/**/*.scss')
+// --- Compile Sass with instant injection ---
+function styles() {
+  return src(paths.styles)
     .pipe(plumber())
-    .pipe(sass())
+    .pipe(gulpSass())
     .pipe(csso())
-		.pipe(gulp.dest('assets/css/'))
-});
+    .pipe(dest('assets/css/'))
+    .pipe(browserSync.stream()); // Inject CSS without page reload
+}
 
-/*
-* Compile fonts
-*/
-gulp.task('fonts', function() {
-	return gulp.src('src/fonts/**/*.{ttf,woff,woff2}')
-		.pipe(plumber())
-		.pipe(gulp.dest('assets/fonts/'))
-});
+// --- Compile JS with reload ---
+function scripts() {
+  return src(paths.js)
+    .pipe(plumber())
+    .pipe(concat('main.js'))
+    .pipe(uglify())
+    .pipe(dest('assets/js/'))
+    .pipe(browserSync.stream());
+}
 
-/*
- * Minify images
- */
-gulp.task('imagemin', function() {
-	return gulp.src('src/img/**/*.{jpg,png,gif}')
-		.pipe(plumber())
-		.pipe(imagemin({ optimizationLevel: 3, progressive: true, interlaced: true }))
-		.pipe(gulp.dest('assets/img/'))
-});
+// --- Copy Fonts ---
+function fonts() {
+  return src(paths.fonts)
+    .pipe(plumber())
+    .pipe(dest('assets/fonts/'));
+}
 
-/**
- * Compile and minify js
- */
-gulp.task('js', function() {
-	return gulp.src('src/js/**/*.js')
-		.pipe(plumber())
-		.pipe(concat('main.js'))
-		.pipe(uglify())
-		.pipe(gulp.dest('assets/js/'))
-});
+// --- Optimize Images ---
+function images() {
+  return src(paths.images)
+    .pipe(plumber())
+    .pipe(imagemin({ optimizationLevel: 3, progressive: true, interlaced: true }))
+    .pipe(dest('assets/img/'));
+}
 
-gulp.task('watch', function() {
-  gulp.watch('src/styles/**/*.scss', gulp.series(['sass', 'jekyll-rebuild']));
-  gulp.watch('src/js/**/*.js', gulp.series(['js', 'jekyll-rebuild']));
-  gulp.watch('src/fonts/**/*.{tff,woff,woff2}', gulp.series(['fonts']));
-  gulp.watch('src/img/**/*.{jpg,png,gif}', gulp.series(['imagemin']));
-  gulp.watch(['*html', '_includes/*html', '_layouts/*.html', '_config.yml'], gulp.series(['jekyll-rebuild']));
-});
+// --- Serve with BrowserSync ---
+function serve() {
+  browserSync.init({
+    server: { baseDir: '_site' },
+    port: 4000
+  });
 
-gulp.task('default', gulp.series(['js', 'sass', 'fonts', 'browser-sync', 'watch']));
+  // Watch CSS/JS/images/fonts for instant reload
+  watch(paths.styles, styles);
+  watch(paths.js, scripts);
+  watch(paths.fonts, fonts);
+  watch(paths.images, images);
+
+  // Watch Jekyll content for full rebuild
+  watch(paths.html, series(jekyllBuild, reload));
+}
+
+// --- Default task ---
+exports.default = series(
+  parallel(styles, scripts, fonts, images),
+  jekyllBuild,
+  serve
+);
