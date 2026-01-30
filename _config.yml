@@ -9,13 +9,13 @@ username: Noah Swartz
 user_title: Full Stack Engineer
 user_description: Specializing in TypeScript, React, React Native, .NET, and AWS. Experienced across frontend, backend, mobile, and cloud infrastructure.
 email: nswartz1990@gmail.com
-location: Elkhorn, NE
+location: Omaha, NE
 # twitter_username: lorem_ipsum
-github_username:  nswartz
+github_username: nswartz
 # gplus_username:  lorem_ipsum
 
 # Google-analytics
 google-analytics:
-  id: ""
+  id: ''
 
-exclude: ['package.json', 'src' , 'node_modules']
+exclude: ['package.json', 'src', 'node_modules']
