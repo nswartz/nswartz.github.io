@@ -5,16 +5,28 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  opacity: 1;
+  visibility: visible;
+  transition: opacity .5s ease, visibility .5s ease;
 }
 
 .resume-modal[hidden] {
-  display: none;
+  display: flex; // Override browser default to allow transition
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
 }
 
 .resume-modal-backdrop {
   position: absolute;
   inset: 0;
   background: rgba(0, 0, 0, 0.8);
+  opacity: 1;
+  transition: opacity 0.25s ease;
+}
+
+.resume-modal[hidden] .resume-modal-backdrop {
+  opacity: 0;
 }
 
 .resume-modal-container {
@@ -27,6 +39,13 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  transform: scale(1);
+  transition: transform 0.25s ease, opacity 0.25s ease;
+}
+
+.resume-modal[hidden] .resume-modal-container {
+  transform: scale(0.95);
+  opacity: 0;
 }
 
 .resume-modal-header {
