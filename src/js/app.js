@@ -116,3 +116,30 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 
 }, false);
+
+// Resume Modal
+const resumeLink = document.getElementById('resume-link');
+const resumeModal = document.getElementById('resume-modal');
+const resumeBackdrop = resumeModal?.querySelector('.resume-modal-backdrop');
+const resumeCloseBtn = resumeModal?.querySelector('.resume-close-btn');
+
+function openResumeModal(e) {
+  e.preventDefault();
+  resumeModal.hidden = false;
+  document.body.style.overflow = 'hidden';
+}
+
+function closeResumeModal() {
+  resumeModal.hidden = true;
+  document.body.style.overflow = '';
+}
+
+resumeLink?.addEventListener('click', openResumeModal);
+resumeBackdrop?.addEventListener('click', closeResumeModal);
+resumeCloseBtn?.addEventListener('click', closeResumeModal);
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && resumeModal && !resumeModal.hidden) {
+    closeResumeModal();
+  }
+});
