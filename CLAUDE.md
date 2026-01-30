@@ -17,3 +17,7 @@ Examples:
 - SCSS for styles (in src/styles/)
 - Vanilla JS (in src/js/)
 - Font Awesome 6 and Devicon via CDN only - no local font files
+
+## JavaScript
+- Always access DOM elements inside a DOMContentLoaded handler, never at module scope
+- This project uses a single DOMContentLoaded handler in app.js - add new code inside it
